@@ -1,0 +1,32 @@
+<%- include('_header') %>
+<div class="container mt-5">
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Welcome to E-Shop</h1>
+        <p class="lead">Find the best products at the best prices</p>
+    </div>
+
+    <h2 class="mb-4">Featured Products</h2>
+    <div class="row">
+        <% products.forEach(function(product) { %>
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <% if (product.image_path) { %>
+                        <img src="<%= product.image_path %>" class="card-img-top" alt="<%= product.name %>">
+                    <% } else { %>
+                        <img src="/images/default-product.jpg" class="card-img-top" alt="Default">
+                    <% } %>
+                    <div class="card-body">
+                        <h5 class="card-title"><%= product.name %></h5>
+                        <p class="card-text">$<%= product.price %></p>
+                        <a href="/products/<%= product.id %>" class="btn btn-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+</div>
+
+
+
+
+
