@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 const path = require('path');
 const multer = require('multer')
 const app = express();
+const axios = require('axios');
+
 
 
 // MySQL connection
@@ -166,6 +168,26 @@ app.post('/add-to-cart', isAuthenticated, (req, res) => {
       });
 });
 
+
+// Remove from cart
+app.post('/cart/remove', isAuthenticated, (req, res) => {
+  const userId = req.session.userId; // Get the logged-in user's ID from the session
+  const productId = parseInt(req.body.productId); // Get the product ID from the form
+
+  const query = 'DELETE FROM cart WHERE user_id = ? AND product_id = ?'; // Use correct column names
+  db.query(query, [userId, productId], (err, result) => {
+    if (err) {
+      console.error('Error removing item from cart:', err);
+      return res.status(500).send('Server Error');
+    }
+    if (result.affectedRows === 0) {
+      console.log('No item found to remove');
+    }
+    res.redirect('/cart');
+  });
+});
+
+
 // Chatroom
 app.get('/chat', isAuthenticated, (req, res) => {
   db.query('SELECT * FROM users WHERE id != ?', [req.session.userId], (err, users) => {
@@ -188,13 +210,160 @@ app.post('/send-message', isAuthenticated, (req, res) => {
 app.get('/contact', (req, res) => {
   res.render('contact');
 });
+
+// Define aboutData (this should match the structure expected by about.ejs)
+const aboutData = {
+  story: {
+      title: "Our Story",
+      content: "SHOPIFY was born out of a passion for making quality products accessible to everyone. Founded in 2024, we started as a small team dedicated to curating the best items from around the globe. Today, we’ve grown into a thriving online marketplace, connecting customers with trusted sellers and unbeatable deals."
+  },
+  mission: [
+      { icon: "fas fa-heart", title: "Customer Happiness", description: "We prioritize your satisfaction with every purchase." },
+      { icon: "fas fa-globe", title: "Global Reach", description: "Bringing the world’s best products to your doorstep." },
+      { icon: "fas fa-star", title: "Top Quality", description: "Curating only the finest items for our customers." }
+  ],
+  team: [
+      { name: "Bramwel Mwambu", role: "Founder & CEO", description: "Bramwel leads SHOPIFY with a vision for innovation and customer-first solutions.", image: "/images/team-member1.jpg" },
+      { name: "Miula Khisa", role: "Head of Operations", description: "Miula ensures every order is delivered with speed and precision.", image: "/images/team-member2.jpg" },
+      { name: "Emily Brown", role: "Customer Success Manager", description: "Emily is dedicated to making your shopping experience exceptional.", image: "/images/team-member3.jpg" }
+  ]
+};
+
+// Route for the About page
+app.get('/about', (req, res) => {
+  try {
+      // Render about.ejs and pass aboutData
+      res.render('about', { aboutData });
+  } catch (err) {
+      console.error('Error rendering about page:', err);
+      res.status(500).send('Internal Server Error');
+  }
+});
+
 // Logout
 app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/');
 });
+//MPESA APPLICATION FROM HERE
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
+// M-Pesa credentials (use environment variables in production)
+require('dotenv').config(); // Add this if using .env file
+const consumerKey = process.env.MPESA_CONSUMER_KEY || 'pr36OFaGXunr4EXJ968KVYiav5GzHZqXMh5zohnKnDYHVkmA';
+const consumerSecret = process.env.MPESA_CONSUMER_SECRET || 'uY3oa3UGUkkhSzwrkR6FFVHkCGQm40OwkM8tENDBF9AViX7c4G8mBToW6RsLKxqY';
+const shortCode = process.env.MPESA_SHORTCODE || '0757042085';
+const passkey = process.env.MPESA_PASSKEY || 'YOUR_LIPA_NA_MPESA_PASSKEY';
+const callbackUrl = 'https://your-domain.com/api/payments/callback'; // Must be public
 
+// Generate OAuth token
+async function getAccessToken() {
+    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
+    const response = await axios.get(
+        'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
+        {
+            headers: { Authorization: `Basic ${auth}` }
+        }
+    );
+    return response.data.access_token;
+}
+
+// Routes
+app.get('/checkout', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
+});
+
+// Initiate STK Push
+app.post('/api/payments/initiate', async (req, res) => {
+    try {
+        const { phoneNumber, amount } = req.body;
+        const token = await getAccessToken();
+        
+        const timestamp = new Date()
+            .toISOString()
+            .replace(/[^0-9]/g, '')
+            .slice(0, -3);
+        const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
+
+        const response = await axios.post(
+            'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
+            {
+                BusinessShortCode: shortCode,
+                Password: password,
+                Timestamp: timestamp,
+                TransactionType: 'CustomerPayBillOnline',
+                Amount: amount,
+                PartyA: phoneNumber,
+                PartyB: shortCode,
+                PhoneNumber: phoneNumber,
+                CallBackURL: callbackUrl,
+                AccountReference: 'E-commerce Purchase',
+                TransactionDesc: 'Payment for order'
+            },
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+
+        res.json({
+            CheckoutRequestID: response.data.CheckoutRequestID
+        });
+    } catch (error) {
+        console.error(error.response?.data || error.message);
+        res.status(500).json({ error: 'Failed to initiate payment' });
+    }
+});
+
+// Callback endpoint
+app.post('/api/payments/callback', (req, res) => {
+    const result = req.body.Body.stkCallback;
+    const checkoutRequestID = result.CheckoutRequestID;
+    const resultCode = result.ResultCode;
+
+    const status = resultCode === 0 ? 'completed' : 'failed';
+    // In production, store this in your database
+    console.log(`Payment ${checkoutRequestID} status: ${status}`);
+    res.status(200).send('Callback received');
+});
+
+// Check payment status
+app.post('/api/payments/status', async (req, res) => {
+    try {
+        const { checkoutRequestID } = req.body;
+        const token = await getAccessToken();
+
+        const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
+        const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
+
+        const response = await axios.post(
+            'https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query',
+            {
+                BusinessShortCode: shortCode,
+                Password: password,
+                Timestamp: timestamp,
+                CheckoutRequestID: checkoutRequestID
+            },
+            {
+                headers: { Authorization: `Bearer ${token}` }
+            }
+        );
+
+        const resultCode = response.data.ResultCode;
+        res.json({
+            status: resultCode === '0' ? 'completed' : 'pending'
+        });
+    } catch (error) {
+        console.error(error.response?.data || error.message);
+        res.status(500).json({ status: 'failed' });
+    }
+});
+
+// Success page (optional)
+app.get('/success', (req, res) => {
+    res.send('<h1>Payment Successful!</h1><p>Thank you for your purchase.</p>');
+});
 
 const port = 7000
 app.listen(port, () => {

@@ -1,31 +1,193 @@
-<%- include('_header') %>
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">Contact Us</div>
-                <div class="card-body">
-                    <form>
-                        <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" required>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - SHOPIFY</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+        }
+        .hero {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            padding: 80px 0;
+        }
+        .contact-section .card, .contact-info {
+            transition: box-shadow 0.3s ease;
+        }
+        .contact-section .card:hover, .contact-info:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .social-links a:hover {
+            color: #0056b3 !important;
+        }
+        .map-section iframe {
+            border: 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('_header') %>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero bg-primary text-white text-center py-5">
+            <div class="container">
+                <h1 class="display-4 fw-bold">Get in Touch</h1>
+                <p class="lead">We’re here to help! Reach out with any questions or concerns.</p>
+            </div>
+        </section>
+
+        <!-- Contact Form and Info Section -->
+        <section class="contact-section py-5">
+            <div class="container">
+                <div class="row g-5">
+                    <!-- Contact Form -->
+                    <div class="col-lg-7">
+                        <div class="card shadow-sm border-0 p-4">
+                            <h2 class="fw-bold mb-4">Send Us a Message</h2>
+                            <form action="/contact" method="POST">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Full Name</label>
+                                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" name="email" placeholder="Enter your email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">Subject</label>
+                                    <input type="text" class="form-control" id="subject" name="subject" placeholder="What’s this about?" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">Message</label>
+                                    <textarea class="form-control" id="message" name="message" rows="5" placeholder="Write your message here" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                            </form>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" required>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="col-lg-5">
+                        <div class="contact-info bg-light p-4 rounded shadow-sm">
+                            <h2 class="fw-bold mb-4">Contact Information</h2>
+                            <ul class="list-unstyled">
+                                <li class="mb-3">
+                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                    <strong>Address:</strong>SHOPIFY, Eldoret-Kenya 
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-phone text-primary me-2"></i>
+                                    <strong>Phone:</strong><a href="tel:+254790614950">+254790614950</a>
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-envelope text-primary me-2"></i>
+                                    <strong>Email:</strong> <a href="mailto:">support@shopify.com</a>
+                                </li>
+                                <li class="mb-3">
+                                    <i class="fas fa-clock text-primary me-2"></i>
+                                    <strong>Hours:</strong> Mon-Sat, 9 AM - 6 PM EST
+                                </li>
+                            </ul>
+                            <div class="social-links mt-4">
+                                <h5 class="fw-bold">Follow Us</h5>
+                                <a href="#" class="text-primary me-3"><i class="fab fa-facebook-f fa-lg"></i></a>
+                                <a href="#" class="text-primary me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                                <a href="#" class="text-primary"><i class="fab fa-instagram fa-lg"></i></a>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Subject</label>
-                            <input type="text" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Message</label>
-                            <textarea class="form-control" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
-                    </form>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        </section>
+
+        <!-- Map Section -->
+        <section class="map-section py-5 bg-light">
+            <div class="container">
+                <h2 class="text-center fw-bold mb-4">Find Us</h2>
+                <div class="ratio ratio-16x9 shadow-sm">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3151.835434509374!2d-122.41941568468145!3d37.774929779759!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8085808f5b8b8c5d%3A0x1e8f8c8d8f8c8c8f!2sSan%20Francisco%2C%20CA%2C%20USA!5e0!3m2!1sen!2sus!4v1634567890123" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include('_footer') %>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <!-- Optional: Custom JS -->
+    <script>
+        // Add form submission feedback (optional)
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            alert('Thank you for your message! We’ll get back to you soon.');
+            this.reset();
+        });
+    </script>
+
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            background-color: #f8f9fa;
+        }
+        .hero {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            padding: 80px 0;
+        }
+        .contact-section .card, .contact-info {
+            transition: box-shadow 0.3s ease;
+        }
+        .contact-section .card:hover, .contact-info:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .social-links a:hover {
+            color: #0056b3 !important;
+        }
+        .map-section iframe {
+            border: 0;
+            border-radius: 8px;
+        }
+    </style>
+</body>
+</html>
