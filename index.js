@@ -6,6 +6,7 @@ const path = require('path');
 const multer = require('multer')
 const app = express();
 const axios = require('axios');
+const paypal = require('@paypal/checkout-server-sdk');
 
 
 
@@ -27,6 +28,30 @@ app.use(session({
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+app.use(express.json());
+
+// Middleware to make user data available to all views
+app.use((req, res, next) => {
+    if (req.session.userId) {
+      db.query('SELECT username FROM users WHERE id = ?', [req.session.userId], (err, results) => {
+        if (err) {
+          console.error(err);
+          next();
+          return;
+        }
+        res.locals.userId = req.session.userId;
+        res.locals.username = results[0].username;
+        next();
+      });
+    } else {
+      res.locals.userId = undefined;
+      res.locals.username = undefined;
+      next();
+    }
+  });
+
+
+
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
@@ -62,14 +87,11 @@ const isAuthenticated = (req, res, next) => {
 
 //routes
 app.get('/', (req, res) => {
-  db.query('SELECT * FROM products', (err, products) => {
+    db.query('SELECT * FROM products', (err, products) => {
       if (err) throw err;
-      res.render('index', { 
-          products: products,
-          userId: req.session.userId
-      });
+      res.render('index', { products: products });
+    });
   });
-});
 // Signup
 app.get('/signup', (req, res) => {
   res.render('signup', { error: null });
@@ -197,15 +219,59 @@ app.get('/chat', isAuthenticated, (req, res) => {
 });
 
 app.post('/send-message', isAuthenticated, (req, res) => {
-  const { receiverId, message } = req.body;
+    const { receiverId, message } = req.body;
   
-  db.query('INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
-      [req.session.userId, receiverId, message],
-      (err) => {
-          if (err) throw err;
-          res.redirect('/chat');
+    // Validate receiverId
+    if (!receiverId || isNaN(receiverId) || receiverId <= 0) {
+      return res.render('chat', { 
+        users: [], // We'll fetch users again below
+        error: 'Please select a valid user to send a message to.',
+        success: null // No success message in case of error
       });
-});
+    }
+  
+    // Fetch available users to re-render the chat page in case of error
+    db.query('SELECT * FROM users WHERE id != ?', [req.session.userId], (err, users) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Server Error');
+      }
+  
+      // Insert the message
+      db.query(
+        'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
+        [req.session.userId, receiverId, message],
+        (err) => {
+          if (err) {
+            console.error(err);
+            return res.render('chat', { 
+              users: users, 
+              error: 'Failed to send message. Please try again.',
+              success: null // No success message in case of error
+            });
+          }
+          // Redirect with a success query parameter
+          res.redirect('/chat?success=Message+has+been+sent+successfully');
+        }
+      );
+    });
+  });
+  
+  // Update the /chat route to handle success/error messages
+  app.get('/chat', isAuthenticated, (req, res) => {
+    const success = req.query.success || null; // Get success message from query parameter
+    db.query('SELECT * FROM users WHERE id != ?', [req.session.userId], (err, users) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Server Error');
+      }
+      res.render('chat', { 
+        users: users,
+        error: null, // No error by default
+        success: success // Pass success message to the template
+      });
+    });
+  });
 // Contact page
 app.get('/contact', (req, res) => {
   res.render('contact');
@@ -245,119 +311,97 @@ app.get('/logout', (req, res) => {
   req.session.destroy();
   res.redirect('/');
 });
-//MPESA APPLICATION FROM HERE
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// M-Pesa credentials (use environment variables in production)
-require('dotenv').config(); // Add this if using .env file
-const consumerKey = process.env.MPESA_CONSUMER_KEY || 'pr36OFaGXunr4EXJ968KVYiav5GzHZqXMh5zohnKnDYHVkmA';
-const consumerSecret = process.env.MPESA_CONSUMER_SECRET || 'uY3oa3UGUkkhSzwrkR6FFVHkCGQm40OwkM8tENDBF9AViX7c4G8mBToW6RsLKxqY';
-const shortCode = process.env.MPESA_SHORTCODE || '0757042085';
-const passkey = process.env.MPESA_PASSKEY || 'YOUR_LIPA_NA_MPESA_PASSKEY';
-const callbackUrl = 'https://your-domain.com/api/payments/callback'; // Must be public
 
-// Generate OAuth token
-async function getAccessToken() {
-    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-    const response = await axios.get(
-        'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials',
-        {
-            headers: { Authorization: `Basic ${auth}` }
-        }
-    );
-    return response.data.access_token;
-}
+// checkout
+app.get('/checkout', (req, res)=>{
+    res.render('checkout');
+})
 
-// Routes
-app.get('/checkout', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'checkout.html'));
-});
+// Profile route
+app.get('/profile', isAuthenticated, (req, res) => {
+    const { status, amount } = req.query; // Get payment status and amount from query params
 
-// Initiate STK Push
-app.post('/api/payments/initiate', async (req, res) => {
-    try {
-        const { phoneNumber, amount } = req.body;
-        const token = await getAccessToken();
-        
-        const timestamp = new Date()
-            .toISOString()
-            .replace(/[^0-9]/g, '')
-            .slice(0, -3);
-        const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
+    db.query('SELECT username, email FROM users WHERE id = ?', [req.session.userId], (err, results) => {
+        if (err) throw err;
+        const user = results[0];
 
-        const response = await axios.post(
-            'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest',
-            {
-                BusinessShortCode: shortCode,
-                Password: password,
-                Timestamp: timestamp,
-                TransactionType: 'CustomerPayBillOnline',
-                Amount: amount,
-                PartyA: phoneNumber,
-                PartyB: shortCode,
-                PhoneNumber: phoneNumber,
-                CallBackURL: callbackUrl,
-                AccountReference: 'E-commerce Purchase',
-                TransactionDesc: 'Payment for order'
-            },
-            {
-                headers: { Authorization: `Bearer ${token}` }
-            }
-        );
-
-        res.json({
-            CheckoutRequestID: response.data.CheckoutRequestID
+        // Pass payment status to the template
+        res.render('profile', { 
+            user,
+            paymentStatus: status === 'paid' ? 'success' : null,
+            paymentAmount: amount || null
         });
-    } catch (error) {
-        console.error(error.response?.data || error.message);
-        res.status(500).json({ error: 'Failed to initiate payment' });
-    }
+    });
+});
+// PayPal Configuration
+const paypalClientId = 'AbkmSy91hgzpnb9HbWEGEA94SEs1V_ePhVkP4KEv4fH1tg5B3wh8QPVqBqSRj5yTvfRWxJk1KuUbkHP_'; // Replace with your Client ID
+const paypalClientSecret = 'EHW_DdjZ2SGzGo9Et-_yI9e2Eu2UR9SvGAwTUFB7mi6jDNdtIIHrvyUTmg45D1IUzkrXl_Mu1F2CPBIe'; // Replace with your Secret
+const environment = new paypal.core.LiveEnvironment(paypalClientId, paypalClientSecret); // Use LiveEnvironment for production
+const paypalClient = new paypal.core.PayPalHttpClient(environment);
+// GET route to render payment page
+app.get('/pay', isAuthenticated, (req, res) => {
+  res.render('pay', { user: req.session.user, clientId: paypalClientId });
 });
 
-// Callback endpoint
-app.post('/api/payments/callback', (req, res) => {
-    const result = req.body.Body.stkCallback;
-    const checkoutRequestID = result.CheckoutRequestID;
-    const resultCode = result.ResultCode;
+// Create payment order
+app.post('/pay/create-order', isAuthenticated, async (req, res) => {
+  const { amount } = req.body;
+  console.log('Received amount:', amount); // Debug log
 
-    const status = resultCode === 0 ? 'completed' : 'failed';
-    // In production, store this in your database
-    console.log(`Payment ${checkoutRequestID} status: ${status}`);
-    res.status(200).send('Callback received');
+  // Validate amount
+  if (!amount || isNaN(amount) || Number(amount) <= 0) {
+      console.error('Invalid amount received:', amount);
+      return res.status(400).json({ error: 'Amount must be a positive number' });
+  }
+
+  // Convert amount to string with 2 decimal places
+  const formattedAmount = Number(amount).toFixed(2);
+  console.log('Formatted amount for PayPal:', formattedAmount); // Debug log
+
+  const request = new paypal.orders.OrdersCreateRequest();
+  request.requestBody({
+      intent: 'CAPTURE',
+      purchase_units: [{
+          amount: {
+              currency_code: 'USD',
+              value: formattedAmount // Ensure it's a string like "10.00"
+          }
+      }]
+  });
+
+  try {
+      const order = await paypalClient.execute(request);
+      console.log('Order created:', order.result); // Debug log
+      res.json({ orderID: order.result.id });
+  } catch (err) {
+      console.error('Error creating order:', err);
+      res.status(500).json({ error: 'Failed to create order' });
+  }
 });
 
-// Check payment status
-app.post('/api/payments/status', async (req, res) => {
-    try {
-        const { checkoutRequestID } = req.body;
-        const token = await getAccessToken();
+// Capture payment (unchanged, included for completeness)
+app.post('/pay/capture-order', isAuthenticated, async (req, res) => {
+  const { orderID } = req.body;
 
-        const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
-        const password = Buffer.from(`${shortCode}${passkey}${timestamp}`).toString('base64');
+  const request = new paypal.orders.OrdersCaptureRequest(orderID);
+  request.requestBody({});
 
-        const response = await axios.post(
-            'https://api.safaricom.co.ke/mpesa/stkpushquery/v1/query',
-            {
-                BusinessShortCode: shortCode,
-                Password: password,
-                Timestamp: timestamp,
-                CheckoutRequestID: checkoutRequestID
-            },
-            {
-                headers: { Authorization: `Bearer ${token}` }
-            }
-        );
+  try {
+      const capture = await paypalClient.execute(request);
+      const captureID = capture.result.purchase_units[0].payments.captures[0].id;
 
-        const resultCode = response.data.ResultCode;
-        res.json({
-            status: resultCode === '0' ? 'completed' : 'pending'
-        });
-    } catch (error) {
-        console.error(error.response?.data || error.message);
-        res.status(500).json({ status: 'failed' });
-    }
+      db.query('INSERT INTO transactions (user_id, paypal_order_id, amount, status) VALUES (?, ?, ?, ?)',
+          [req.session.user.id, orderID, capture.result.purchase_units[0].amount.value, 'COMPLETED'],
+          (err) => {
+              if (err) console.error('Error saving transaction:', err);
+          });
+
+      res.json({ status: 'success', captureID });
+  } catch (err) {
+      console.error('Error capturing order:', err);
+      res.status(500).json({ error: 'Failed to capture payment' });
+  }
 });
 
 // Success page (optional)
