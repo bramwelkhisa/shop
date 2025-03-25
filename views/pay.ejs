@@ -24,8 +24,9 @@
             <h2 class="text-center mb-4">Pay with PayPal</h2>
             <form id="paymentForm">
                 <div class="mb-3">
-                    <label for="amount" class="form-label">Amount (USD)</label>
-                    <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" required>
+                    <label for="amount" class="form-label">Amount (Ksh)</label>
+                    <input type="number" class="form-control" id="amount" name="amount" min="1" step="0.01" value="<%= total %>" required>
+                    <small>Approx. $<%= (total * 0.0077).toFixed(2) %> USD</small>
                 </div>
                 <div id="paypal-button-container"></div>
             </form>
@@ -34,7 +35,7 @@
     </div>
     <footer>
         <div class="footer text-center">
-            <p>&copy; 2024 SHOPIFY. All rights reserved.</p>
+            <p>© 2024 SHOPIFY. All rights reserved.</p>
         </div>
     </footer>
 
@@ -50,7 +51,13 @@
                     body: JSON.stringify({ amount })
                 })
                 .then(res => res.json())
-                .then(data => data.orderID);
+                .then(data => {
+                    if (data.orderID) {
+                        return data.orderID;
+                    } else {
+                        throw new Error(data.error || 'Failed to create order');
+                    }
+                });
             },
             onApprove: function(data, actions) {
                 return fetch('/pay/capture-order', {

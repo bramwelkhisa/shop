@@ -345,23 +345,26 @@ const paypalClientSecret = 'EHW_DdjZ2SGzGo9Et-_yI9e2Eu2UR9SvGAwTUFB7mi6jDNdtIIHr
 const environment = new paypal.core.LiveEnvironment(paypalClientId, paypalClientSecret);
 const paypalClient = new paypal.core.PayPalHttpClient(environment);
 
-// GET route to render payment page
+// GET route to render payment page with prefilled amount
 app.get('/pay', isAuthenticated, (req, res) => {
-    res.render('pay', { user: req.session.user, clientId: paypalClientId });
+    const total = req.query.total || ''; // Get total from query param
+    res.render('pay', { user: req.session.user, clientId: paypalClientId, total });
 });
 
-// Create payment order
+// Create payment order with Ksh to USD conversion
 app.post('/pay/create-order', isAuthenticated, async (req, res) => {
     const { amount } = req.body;
-    console.log('Received amount:', amount);
+    console.log('Received amount (Ksh):', amount);
 
     if (!amount || isNaN(amount) || Number(amount) <= 0) {
         console.error('Invalid amount received:', amount);
         return res.status(400).json({ error: 'Amount must be a positive number' });
     }
 
-    const formattedAmount = Number(amount).toFixed(2);
-    console.log('Formatted amount for PayPal:', formattedAmount);
+    // Convert Ksh to USD (example exchange rate: 1 Ksh = 0.0077 USD)
+    const exchangeRate = 0.0077; // Replace with current rate or fetch from API
+    const amountInUSD = (Number(amount) * exchangeRate).toFixed(2);
+    console.log('Converted amount (USD):', amountInUSD);
 
     const request = new paypal.orders.OrdersCreateRequest();
     request.requestBody({
@@ -369,7 +372,7 @@ app.post('/pay/create-order', isAuthenticated, async (req, res) => {
         purchase_units: [{
             amount: {
                 currency_code: 'USD',
-                value: formattedAmount
+                value: amountInUSD
             }
         }]
     });
