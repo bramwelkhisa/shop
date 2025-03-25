@@ -28,74 +28,115 @@
             color: white;
             padding: 20px 0;
         }
-            body {
-                font-family: 'Poppins', sans-serif;
-                line-height: 1.6;
-            }
-            .hero {
-                background: linear-gradient(135deg, #007bff, #0056b3);
-                padding: 80px 0;
-            }
-            .product-card {
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-            }
-            .product-card:hover {
-                transform: translateY(-10px);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-            }
-            .btn-primary {
-                background-color: #007bff;
-                border-color: #007bff;
-                transition: background-color 0.3s ease;
-            }
-            .btn-primary:hover {
-                background-color: #0056b3;
-                border-color: #0056b3;
-            }
-            .card-footer {
-                font-size: 0.9rem;
-            }
-            footer a:hover {
-                color: #007bff !important;
-                text-decoration: underline;
-            }
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+        }
+        .hero {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            padding: 80px 0;
+        }
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        .card-footer {
+            font-size: 0.9rem;
+        }
+        footer a:hover {
+            color: #007bff !important;
+            text-decoration: underline;
+        }
 
+        .hero {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+        
+        .hero .container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Product Scroller Styling */
+        .product-scroller {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+
+        .product-scroller-inner {
+            display: flex;
+            flex-wrap: nowrap;
+            animation: scrollLeftToRight 20s linear infinite; /* Adjust speed with duration */
+        }
+
+        .product-scroller-inner .col-md-4 {
+            flex: 0 0 auto; /* Prevent shrinking */
+            width: 33.333%; /* Match Bootstrap col-md-4 */
+            min-width: 300px; /* Ensure cards are visible */
+        }
+
+        @keyframes scrollLeftToRight {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* Pause animation on hover */
+        .product-scroller-inner:hover {
+            animation-play-state: paused;
+        }
+
+        @media (max-width: 768px) {
             .hero {
-                position: relative;
-                width: 100%;
-                overflow: hidden;
+                min-height: 60vh;
             }
-            
-            .hero::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0, 0, 0, 0.3); /* Optional: adds a dark overlay for better text readability */
-                z-index: 1;
+            .hero h1 {
+                font-size: 2.5rem;
             }
-            
-            .hero .container {
-                position: relative;
-                z-index: 2;
+            .hero p {
+                font-size: 1rem;
             }
-            
-            @media (max-width: 768px) {
-                .hero {
-                    min-height: 60vh; /* Adjusts height for smaller screens */
-                }
-                
-                .hero h1 {
-                    font-size: 2.5rem; /* Reduces heading size on mobile */
-                }
-                
-                .hero p {
-                    font-size: 1rem; /* Adjusts paragraph size on mobile */
-                }
+            .product-scroller-inner .col-md-4 {
+                width: 50%; /* Adjust for smaller screens */
+                min-width: 250px;
             }
-            
+        }
+
+        @media (max-width: 576px) {
+            .product-scroller-inner .col-md-4 {
+                width: 100%; /* Full width on very small screens */
+                min-width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -103,80 +144,82 @@
 <!-- Main Container -->
 <main class="main-content">
     <!-- Hero Section -->
-<section class="hero text-white text-center py-5" style="background: url('/img/good.jpg') no-repeat center center; background-size: cover; min-height: 90vh;">
-    <div class="container h-100">
-        <div class="row h-100 align-items-center">
-            <div class="col-12">
-                <h1 class="display-3 fw-bold">Welcome to SHOPIFY</h1>
-                <p class="lead">Discover top-quality products at unbeatable prices</p>
-                <a href="/products" class="btn btn-primary btn-lg mt-3">Shop Now</a>
+    <section class="hero text-white text-center py-5" style="background: url('/img/good.jpg') no-repeat center center; background-size: cover; min-height: 90vh;">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12">
+                    <h1 class="display-3 fw-bold">Welcome to SHOPIFY</h1>
+                    <p class="lead">Discover top-quality products at unbeatable prices</p>
+                    <a href="/products" class="btn btn-primary btn-lg mt-3">Shop Now</a>
+                </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
     <!-- Featured Products Section -->
     <section id="featured-products" class="py-5 bg-light">
         <div class="container">
             <h2 class="text-center mb-5 fw-bold">Featured Products</h2>
-            <div class="row g-4">
-                <% products.forEach(function(product) { %>
-                    <div class="col-md-4 col-sm-6">
-                        <div class="card h-100 shadow-sm border-0 product-card">
-                            <% if (product.image_path) { %>
-                                <img src="<%= product.image_path %>" class="card-img-top" alt="<%= product.name %>" style="height: 200px; object-fit: cover;">
-                            <% } else { %>
-                                <img src="/images/default-product.jpg" class="card-img-top" alt="Default" style="height: 200px; object-fit: cover;">
-                            <% } %>
-                            <div class="card-body d-flex flex-column p-4">
-                                <h5 class="card-title fw-bold"><%= product.name %></h5>
-                                <div class="mb-3">
-                                    <span class="h4 text-primary">Ksh:<%= product.price %></span>
-                                    <% if (product.oldPrice) { %>
-                                        <small class="text-muted text-decoration-line-through ms-2">Ksh:<%= product.oldPrice %></small>
-                                    <% } %>
+            <div class="product-scroller">
+                <div class="product-scroller-inner">
+                    <% products.forEach(function(product) { %>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="card h-100 shadow-sm border-0 product-card">
+                                <% if (product.image_path) { %>
+                                    <img src="<%= product.image_path %>" class="card-img-top" alt="<%= product.name %>" style="height: 200px; object-fit: cover;">
+                                <% } else { %>
+                                    <img src="/images/default-product.jpg" class="card-img-top" alt="Default" style="height: 200px; object-fit: cover;">
+                                <% } %>
+                                <div class="card-body d-flex flex-column p-4">
+                                    <h5 class="card-title fw-bold"><%= product.name %></h5>
+                                    <div class="mb-3">
+                                        <span class="h4 text-primary">Ksh:<%= product.price %></span>
+                                        <% if (product.oldPrice) { %>
+                                            <small class="text-muted text-decoration-line-through ms-2">Ksh:<%= product.oldPrice %></small>
+                                        <% } %>
+                                    </div>
+                                    <div class="product-details small text-muted mb-3">
+                                        <% if (product.category) { %>
+                                            <p><i class="fas fa-tag me-1"></i> <%= product.category %></p>
+                                        <% } %>
+                                        <% if (product.stock) { %>
+                                            <p><i class="fas fa-box me-1"></i> Stock: <%= product.stock %></p>
+                                        <% } %>
+                                        <% if (product.rating) { %>
+                                            <div class="text-warning mb-2">
+                                                <% for(let i = 0; i < Math.floor(product.rating); i++) { %>
+                                                    <i class="fas fa-star"></i>
+                                                <% } %>
+                                                <% if(product.rating % 1 !== 0) { %>
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                <% } %>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                    <div class="mt-auto d-grid gap-2">
+                                        <a href="/products/<%= product.id %>" class="btn btn-outline-primary">View Details</a>
+                                        <button class="btn btn-primary add-to-cart" data-product-id="<%= product.id %>">
+                                            <i class="fas fa-shopping-cart me-1"></i> Add to Cart
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="product-details small text-muted mb-3">
-                                    <% if (product.category) { %>
-                                        <p><i class="fas fa-tag me-1"></i> <%= product.category %></p>
-                                    <% } %>
-                                    <% if (product.stock) { %>
-                                        <p><i class="fas fa-box me-1"></i> Stock: <%= product.stock %></p>
-                                    <% } %>
-                                    <% if (product.rating) { %>
-                                        <div class="text-warning mb-2">
-                                            <% for(let i = 0; i < Math.floor(product.rating); i++) { %>
-                                                <i class="fas fa-star"></i>
-                                            <% } %>
-                                            <% if(product.rating % 1 !== 0) { %>
-                                                <i class="fas fa-star-half-alt"></i>
-                                            <% } %>
-                                        </div>
-                                    <% } %>
-                                </div>
-                                <div class="mt-auto d-grid gap-2">
-                                    <a href="/products/<%= product.id %>" class="btn btn-outline-primary">View Details</a>
-                                    <button class="btn btn-primary add-to-cart" data-product-id="<%= product.id %>">
-                                        <i class="fas fa-shopping-cart me-1"></i> Add to Cart
-                                    </button>
-                                </div>
+                                <% if (product.shipping === 'free' || product.delivery_time) { %>
+                                    <div class="card-footer bg-transparent small text-muted">
+                                        <% if (product.shipping === 'free') { %>
+                                            <span><i class="fas fa-truck me-1"></i> Free Shipping</span>
+                                        <% } %>
+                                        <% if (product.delivery_time) { %>
+                                            <span><i class="fas fa-clock me-1"></i> <%= product.delivery_time %></span>
+                                        <% } %>
+                                    </div>
+                                <% } %>
                             </div>
-                            <% if (product.shipping === 'free' || product.delivery_time) { %>
-                                <div class="card-footer bg-transparent small text-muted">
-                                    <% if (product.shipping === 'free') { %>
-                                        <span><i class="fas fa-truck me-1"></i> Free Shipping</span>
-                                    <% } %>
-                                    <% if (product.delivery_time) { %>
-                                        <span><i class="fas fa-clock me-1"></i> <%= product.delivery_time %></span>
-                                    <% } %>
-                                </div>
-                            <% } %>
                         </div>
-                    </div>
-                <% }); %>
+                    <% }); %>
+                </div>
             </div>
 
-            <!-- Pagination -->
+            <!-- Pagination (Optional, removed from scroller context) -->
             <% if (products.length > 0) { %>
                 <nav aria-label="Page navigation" class="mt-5">
                     <ul class="pagination justify-content-center">
@@ -262,6 +305,12 @@
 <%- include('_footer') %>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const scrollerInner = document.querySelector('.product-scroller-inner');
+        const content = scrollerInner.innerHTML;
+        scrollerInner.innerHTML += content; // Duplicate content for seamless looping
+    });
+</script>
 </body>
 </html>
-

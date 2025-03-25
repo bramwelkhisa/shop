@@ -1,31 +1,206 @@
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-black">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Navbar Styling */
+        .navbar {
+            background: linear-gradient(90deg, #1a1a1a, #333333);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border: 2px solid #ffd700;
+            border-radius: 8px;
+            margin: 0.5rem 1rem;
+        }
+
+        .navbar-brand {
+            font-family: 'Arial', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            transition: color 0.3s ease;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .navbar-brand:hover {
+            color: #ffd700;
+        }
+
+        .navbar-nav .nav-link {
+            font-size: 1.1rem;
+            color: #e0e0e0;
+            padding: 0.75rem 1.25rem;
+            position: relative;
+            transition: color 0.3s ease;
+            border-right: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        /* Remove border-right from the last nav item in each list */
+        .navbar-nav .nav-item:last-child .nav-link {
+            border-right: none;
+        }
+
+        /* Underline animation on hover */
+        .navbar-nav .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: #ffd700;
+            transition: width 0.3s ease, left 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover::after {
+            width: 100%;
+            left: 0;
+        }
+
+        .navbar-nav .nav-link:hover {
+            color: #ffd700;
+        }
+
+        /* General Icon Styling */
+        .navbar-nav .nav-link i {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        /* Specific styling for Chat icon */
+        .navbar-nav .nav-link[href="/chat"] i.bi-chat-left-text {
+            color: #007bff; /* Default blue */
+        }
+
+        .navbar-nav .nav-link[href="/chat"]:hover i.bi-chat-left-text {
+            color: #66b0ff; /* Lighter blue on hover */
+            transform: scale(1.2);
+        }
+
+        /* General hover for other icons */
+        .navbar-nav .nav-link:hover i:not(.bi-chat-left-text) {
+            transform: scale(1.2);
+            color: #ffd700;
+        }
+
+        /* Buttons (Login, Signup, Logout) */
+        .btn-outline-light {
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.2));
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .btn-outline-light:hover {
+            background: #ffd700;
+            color: #1a1a1a;
+            border-color: #ffd700;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Profile link */
+        .nav-item .nav-link[href="/profile"] {
+            color: #00ccff;
+            font-weight: bold;
+            border: 1px solid rgba(0, 204, 255, 0.3);
+            border-radius: 5px;
+            padding: 0.5rem 1rem;
+        }
+
+        .nav-item .nav-link[href="/profile"]:hover {
+            color: #66e0ff;
+        }
+
+        /* Toggler Icon */
+        .navbar-toggler {
+            border: 2px solid #ffd700;
+            border-radius: 5px;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 215, 0, 1)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 991px) {
+            .navbar {
+                margin: 0.5rem 0;
+                border-radius: 0;
+            }
+            .navbar-nav {
+                padding-top: 1rem;
+            }
+            .navbar-nav .nav-link {
+                padding: 0.5rem 1rem;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+            }
+            .navbar-nav .nav-item:last-child .nav-link {
+                border-bottom: none;
+            }
+            .btn-outline-light {
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="/">SHOPIFY</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link" href="/products">PRODUCTS</a>
+                    <a class="nav-link" href="/products">
+                        <i class="bi bi-shop"></i> PRODUCTS
+                    </a>
                 </li>
                 <% if (typeof userId !== 'undefined') { %>
                     <li class="nav-item">
-                        <a class="nav-link" href="/cart">CART</a>
+                        <a class="nav-link" href="/cart">
+                            <i class="bi bi-cart"></i> CART
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/chat">CHAT</a>
+                        <a class="nav-link" href="/chat">
+                            <i class="bi bi-chat-left-text"></i> CHAT
+                        </a>
                     </li>
                 <% } %>
                 <li class="nav-item">
-                    <a class="nav-link" href="/contact">CONTACT</a>
+                    <a class="nav-link" href="/contact">
+                        <i class="bi bi-envelope"></i> CONTACT
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/reports">Reports</a>
+                    <a class="nav-link" href="/reports">
+                        <i class="bi bi-bell"></i> REPORTS
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/about">ABOUT-US</a>
+                    <a class="nav-link" href="/pay">
+                        <i class="bi bi-credit-card"></i> PAY
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/about">
+                        <i class="bi bi-info-circle"></i> ABOUT-US
+                    </a>
                 </li>
             </ul>
             <ul class="navbar-nav">
@@ -48,3 +223,7 @@
         </div>
     </div>
 </nav>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
