@@ -178,15 +178,39 @@ app.get('/cart', isAuthenticated, (req, res) => {
         });
 });
 
+// Add to cart route
 app.post('/add-to-cart', isAuthenticated, (req, res) => {
-    const { productId, quantity } = req.body;
-    
-    db.query('INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)',
-        [req.session.userId, productId, quantity],
-        (err) => {
-            if (err) throw err;
-            res.redirect('/cart');
-        });
+    const selectedProducts = req.body.selectedProducts || []; // Array of product IDs
+    const userId = req.session.userId;
+
+    // Ensure selectedProducts is an array
+    if (!Array.isArray(selectedProducts)) {
+        selectedProducts = [selectedProducts];
+    }
+
+    if (selectedProducts.length === 0) {
+        return res.redirect('/cart'); // Nothing selected, redirect to cart
+    }
+
+    // Prepare values for bulk insert or update
+    const values = selectedProducts.map(productId => {
+        const quantity = parseInt(req.body[`quantity_${productId}`]) || 1;
+        return [userId, productId, quantity];
+    });
+
+    // Insert or update cart items in the database
+    const query = `
+        INSERT INTO cart (user_id, product_id, quantity) 
+        VALUES ? 
+        ON DUPLICATE KEY UPDATE quantity = quantity + VALUES(quantity)
+    `;
+    db.query(query, [values], (err) => {
+        if (err) {
+            console.error('Error adding to cart:', err);
+            return res.status(500).send('Server Error');
+        }
+        res.redirect('/cart');
+    });
 });
 
 // Remove from cart
@@ -301,7 +325,7 @@ app.get('/checkout', (req, res) => {
 
 // Profile route
 app.get('/profile', isAuthenticated, (req, res) => {
-    const { status, amount } = req.query; // Get payment status and amount from query params
+    const { status, amount } = req.query;
 
     db.query('SELECT username, email FROM users WHERE id = ?', [req.session.userId], (err, results) => {
         if (err) throw err;
@@ -360,7 +384,7 @@ app.post('/pay/create-order', isAuthenticated, async (req, res) => {
     }
 });
 
-// Capture payment (updated to redirect to profile)
+// Capture payment
 app.post('/pay/capture-order', isAuthenticated, async (req, res) => {
     const { orderID } = req.body;
 
@@ -388,7 +412,7 @@ app.post('/pay/capture-order', isAuthenticated, async (req, res) => {
     }
 });
 
-// Reports route (inserted here)
+// Reports route
 app.get('/reports', isAuthenticated, (req, res) => {
     const userId = req.session.userId;
     db.query('SELECT paypal_order_id, amount, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC', 
